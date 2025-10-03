@@ -50,21 +50,34 @@
 
 </head>
 <body>
-  <div class="container">
-    <h1>Verificador de Rede</h1>
-    <p><strong>IP Fixo:</strong> <span id="ipFixo">192.168.1.10</span></p>
+  <!-- PÁGINA WEB DO VERIFICADOR DE REDES -->
 
+  <!-- CONTAINER GERAL -->
+  <div class="container">
+    <!-- TÍTULO -->
+    <h1>Verificador de Rede</h1>
+    <!-- EM TEXTO, O IP FIXO -->
+    <p><strong>IP Fixo:</strong> <span id="ipFixo">192.168.1.10</span></p>
+      
+    <!-- CAIXA DE TEXTO COM A OPÇÃO DE DIGITAR SOMENTE NÚMEROS, QUE NESSE CASO,
+         É PARA DIZER QUANTOS BITS É PARA TER A MÁSCARA-->
     <label for="bits">Máscara (em bits):</label>
     <input type="number" id="bits" min="1" max="32" placeholder="Ex: 24">
-
+      
+    <!-- CAIXA DE TEXTO QUE É PARA DIGITAR O IP DE DESTINO  -->
     <label for="ipDestino">IP de destino:</label>
     <input type="text" id="ipDestino" placeholder="Ex: 192.168.1.50">
 
+    <!--BOTÃO DE VERIFICAR SE ESTÁ NA MESMA REDE OU NÃO -->
     <button onclick="verificar()">Verificar</button>
 
+    <!--CONTAINER INDIVIDUAL PARA MOSTRAR O RESULTADO APÓS CLICAR NO BOTÃO DE VERIFICAR -->
     <div id="saida" class="resultado"></div>
 
+    <!-- TÍTULO PARA OS INTEGRANTES -->
     <h4>Integrantes:</h4>
+
+    <!-- LISTA DESORDENADA PARA O NOME DOS INTEGRANTES -->
     <ul type="disc">
          <li>Hiarley</a></li>
          <li>Káthia</a></li>
@@ -73,55 +86,63 @@
       </ul>
   </div>
 
+  <!-- PARTE DE JavaScript DO SISTEMA -->
   <script>
-    const IP_FIXO = "192.168.1.10"; // variável constante
+    // VARIÁVEL CONSTANTE DO IP FIXO
+    const IP_FIXO = "192.168.1.10";
 
-    // Função: converte máscara em bits para decimal e binário
+    // FUNÇÃO PARA CONVERTER A MÁSCARA PARA: DECIMAL E BINÁRIO
     function gerarMascara(bits) {
-      let mascara = (0xFFFFFFFF << (32 - bits)) >>> 0;
-      let octetos = [];
-      for (let i = 3; i >= 0; i--) {
-        octetos.push((mascara >>> (i * 8)) & 0xFF);
+       let mascara = (0xFFFFFFFF << (32 - bits)) >>> 0; // INICIA TUDO COM 32, APÓS SUBSTITUIR POR 32 PARA OBTER A NOVA MÁSCARA OS 1 FICA ESQUERDA E OS 0 FICAM A ESQUERDA
+       let octetos = []; // ONDE IRÁ TER O 4 OCTETOS, DE 0...255
+
+       // LOP DESCRESCENTE PARA EXTRAIR O OCTETO MAIS SIGNIFICATIVO PRIMEIRO
+       for (let i = 3; i >= 0; i--) {
+        octetos.push((mascara >>> (i * 8)) & 0xFF); // ELE DESLOCA PARA A DIREITA E QUE VAI EXTRAIR 
+                                                    // APENAS O IP MAIS SIGNIFICATIVO E MANTER APENAS O MENOS SIGNIFICATIVO
       }
-      let mascaraDecimal = octetos.join(".");
-      let octetosBin = octetos.map(o => o.toString(2).padStart(8, "0"));
-      return { mascaraDecimal, octetosBin };
-    }
+       let mascaraDecimal = octetos.join("."); // VAI DEIXAR, POR EXEMPLO: 255.255.255.255
+       let octetosBin = octetos.map(o => o.toString(2).padStart(8, "0")); // TRANSFORMA O NÚMERO EM BINÁRIO
+       return { mascaraDecimal, octetosBin }; // RETORNO DOS NÚMEROS EM DECIMAL E BINÁRIO
+     }
 
-    // Converte IP string para inteiro
+    // FUNÇÃO QUE RETORNA O IP EM INTEIROS
     function ipParaInt(ip) {
-      return ip.split(".")
-        .map(Number)
-        .reduce((acc, val) => (acc << 8) + val, 0) >>> 0;
+      return ip.split(".") // SEPARA OS OCTETOS POR (.)
+        .map(Number) // TRASNFORMA CADA ELEMENTO EM NÚMERO, PORQUE ANTES ESTÃO EM STRING ("")
+        .reduce((acc, val) => (acc << 8) + val, 0) >>> 0; // AQUI CADA OCTETOS É DESLOCADO PARA ESQUERDA 
+                                                          // E DEPOIS FAZ A CONTAGEM ATÉ CHEGAR NOS 32 BITS
     }
 
-    // Função principal
+    // FUNÇÃO DE VERIFICAR OS BITS, IP DE DESTINO E A SAÍDA
     function verificar() {
-      const bits = parseInt(document.getElementById("bits").value);
-      const ipDestino = document.getElementById("ipDestino").value;
-      const saida = document.getElementById("saida");
+      const bits = parseInt(document.getElementById("bits").value); // TRANSFORMA PARA INTEIRO
+      const ipDestino = document.getElementById("ipDestino").value; // INPUT QUE VAI ESTAR O IP DE DESTINO
+      const saida = document.getElementById("saida"); // ONDE O RESULTADO VAI SER ALOCADO
 
+     // VERIFICAÇÃO, ONDE PRECISAR PRECISAR PREENCHER OS BITS E IP DE DESTINO
       if (!bits || !ipDestino) {
         saida.innerHTML = "<p style='color:red'>⚠ Preencha todos os campos corretamente.</p>";
         return;
       }
 
-      // Gera máscara
+      // GERA A MÁSCARA
       const { mascaraDecimal, octetosBin } = gerarMascara(bits);
 
-      // Calcula rede de origem e destino
-      const ipFixoInt = ipParaInt(IP_FIXO);
-      const ipDestInt = ipParaInt(ipDestino);
-      const mascaraInt = ipParaInt(mascaraDecimal);
+      // CALCULA A REDE DE ORIGEM E DESTINO
+      const ipFixoInt = ipParaInt(IP_FIXO); // TRANSFORMA O IP FIXO PARA INTEIRO
+      const ipDestInt = ipParaInt(ipDestino); //TRANSFORMA O IP DE DESTINO PARA INTEIRO
+      const mascaraInt = ipParaInt(mascaraDecimal); // TRNNASFORMA A MÁSCARA PARA INTEIRO
 
+      // MOSTRA OS IP DE ORIGEM E DESTINO EM DECIMAL E BINÁRIO
       const redeOrigem = ipFixoInt & mascaraInt;
       const redeDestino = ipDestInt & mascaraInt;
 
-      // Resultado
-      let resultado = `
-        <p><strong>Máscara decimal:</strong> ${mascaraDecimal}</p>
-        <p><strong>Máscara em binário:</strong> ${octetosBin.join(" . ")}</p>`;
+      // APRESENTA O RESULTADO EM DECIMAL E BINÁRIO
+      let resultado = `<p><strong>Máscara decimal:</strong> ${mascaraDecimal}</p>
+                       <p><strong>Máscara em binário:</strong> ${octetosBin.join(" . ")}</p>`;
 
+      // DIZ SE ESTÁ NA MESMA REDE OU NÃO
       if (redeOrigem === redeDestino) {
         resultado += `<p style="color:green">O IP ${ipDestino} está na MESMA rede de ${IP_FIXO}.</p>`;
       } else {
